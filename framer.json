@@ -1,0 +1,8 @@
+{
+  "id": "126f53",
+  "name": "Framer Plugin",
+  "modes": [
+    "canvas"
+  ],
+  "icon": "/icon.svg"
+}
