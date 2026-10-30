@@ -21,6 +21,9 @@ export function App() {
     () => buildEmbedUrl({ forumUrl, page, fullWidth }),
     [forumUrl, page, fullWidth],
   )
+  // Live validation: show WHY the preview/buttons are unavailable while typing
+  // (otherwise invalid input just silently hides the preview — no feedback).
+  const liveError = !preview.ok && forumUrl.trim() !== "" ? preview.error : null
 
   const handleAddToSite = async () => {
     const built = buildEmbedCode({ forumUrl, page, fullWidth })
@@ -87,6 +90,8 @@ export function App() {
         />
         Full width
       </label>
+
+      {liveError && <p className="wtbx-status-error">{liveError}</p>}
 
       {preview.ok && (
         <code className="wtbx-preview" title={preview.embedUrl}>
