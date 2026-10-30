@@ -26,6 +26,16 @@ export type EmbedUrlResult =
 /** WT master altEmbedParam: '?p=' normally, '?wtp=' when alt_embed_param is on. */
 const ALT_EMBED_PARAM = "?p="
 
+/**
+ * Real-host check. Browser `new URL()` is WHATWG-lenient: "https://not a url!!"
+ * PARSES there (host "not%20a%20url!!") and "https://!!!" parses — while node
+ * throws, so unit tests alone miss it (proven on Chrome 149 vs node 22,
+ * 2026-10-30). A WT forum is always an FQDN: ≥2 dot-separated DNS labels,
+ * [a-z0-9-] only per label, no leading/trailing hyphen (punycode "xn--" ok).
+ */
+const HOSTNAME_RE =
+  /^(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i
+
 /** Trim trailing slashes so "/js/mb/embed.js" never gets a "//" seam. */
 function normalizeForumUrl(raw: string): string {
   const trimmed = raw.trim()
@@ -90,10 +100,20 @@ export function buildEmbedUrl(input: EmbedUrlInput): EmbedUrlResult {
   if (!forumUrl) {
     return { ok: false, error: "Enter your forum URL (e.g. https://acme.websitetoolbox.com)." }
   }
+  let parsed: URL
   try {
-    new URL(forumUrl)
+    parsed = new URL(forumUrl)
   } catch {
     return { ok: false, error: `"${input.forumUrl}" is not a valid URL.` }
+  }
+  if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    return { ok: false, error: `"${input.forumUrl}" must be an http(s) address.` }
+  }
+  if (!HOSTNAME_RE.test(parsed.hostname)) {
+    return {
+      ok: false,
+      error: `"${input.forumUrl}" doesn't look like a forum address — expected e.g. acme.websitetoolbox.com.`,
+    }
   }
 
   let pageParam: string | null = null

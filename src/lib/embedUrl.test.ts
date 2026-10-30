@@ -44,6 +44,32 @@ describe("buildEmbedUrl — WT master updateEmbedCode() byte-match rules", () =>
     expect(home.ok && home.embedUrl).toBe(`${FORUM}/js/mb/embed.js`)
   })
 
+  it("rejects garbage the browser WHATWG URL() would accept (host sanity)", () => {
+    // Chrome parses these (percent-encoding / bare punctuation hosts) while
+    // node throws — the hostname check must reject them in BOTH runtimes.
+    for (const bad of [
+      "https://not a url!!",
+      "https://exa mple.com",
+      "https://!!!",
+      "https://http",
+      "https://a..b",
+      "ftp://files.websitetoolbox.com",
+    ]) {
+      const r = buildEmbedUrl({ forumUrl: bad })
+      expect(r.ok, bad).toBe(false)
+    }
+  })
+
+  it("accepts real hosts: subdomains, punycode, explicit port", () => {
+    for (const good of [
+      "https://beta38.websitetoolbox.com",
+      "http://forum.example.co.uk:8080",
+      "https://xn--fsq.com",
+    ]) {
+      expect(buildEmbedUrl({ forumUrl: good }).ok, good).toBe(true)
+    }
+  })
+
   it("fullwidth rule: unchecked → ?fullwidth=0 appended", () => {
     const r = buildEmbedUrl({ forumUrl: FORUM, fullWidth: false })
     expect(r.ok && r.embedUrl).toBe(`${FORUM}/js/mb/embed.js?fullwidth=0`)
