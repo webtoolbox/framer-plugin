@@ -52,6 +52,13 @@ from there:
 the free plan the plugin copies the snippet to the clipboard instead, for
 placement in an Embed element.
 
+## Known limitations
+
+- A forum with the `alt_embed_param` setting gets a different snippet from the
+  Website Toolbox admin — a `data-version="1.1"` marker and `?wtp=` page params.
+  The plugin always builds the default `?p=` form, because that setting cannot be
+  read from the forum URL.
+
 ## Release
 
 ```bash

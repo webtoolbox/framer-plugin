@@ -17,7 +17,14 @@ main.wtbx-plugin {
 
 .wtbx-hint {
   font-weight: 400;
-  opacity: 0.6;
+  /* 0.6 fell below WCAG AA (axe: serious colour-contrast on the hint label). */
+  opacity: 0.8;
+}
+
+.wtbx-note {
+  font-size: 11px;
+  line-height: 1.45;
+  opacity: 0.85;
 }
 
 .wtbx-plugin input[type="url"],

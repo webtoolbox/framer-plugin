@@ -122,6 +122,19 @@ describe("buildEmbedUrl — WT master updateEmbedCode() byte-match rules", () =>
     const r = buildEmbedUrl({ forumUrl: "http://" })
     expect(r.ok).toBe(false)
   })
+
+  it("malformed %-escape in the ?p= page → field error, not a thrown URIError", () => {
+    // decodeURIComponent throws on these; buildEmbedUrl runs inside useMemo
+    // during render, so an uncaught throw blanked the whole panel.
+    for (const bad of ["page?p=%", "listing?p=%E0%A4%A", "x?p=%zz"]) {
+      let r: ReturnType<typeof buildEmbedUrl>
+      expect(() => {
+        r = buildEmbedUrl({ forumUrl: FORUM, page: bad })
+      }).not.toThrow()
+      expect(r!.ok, bad).toBe(false)
+      if (!r!.ok) expect(r!.error).toContain("invalid escape sequence")
+    }
+  })
 })
 
 describe("buildEmbedCode — WT admin snippet shape", () => {

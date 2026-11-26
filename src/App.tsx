@@ -1,4 +1,4 @@
-import { framer } from "@framer/plugin"
+import { framer, useIsAllowedTo } from "@framer/plugin"
 import { useMemo, useState } from "react"
 import { buildEmbedCode, buildEmbedUrl } from "./lib/embedUrl.ts"
 import { installEmbed } from "./lib/installEmbed.ts"
@@ -25,6 +25,9 @@ export function App() {
   // Live validation: show WHY the preview/buttons are unavailable while typing
   // (otherwise invalid input just silently hides the preview — no feedback).
   const liveError = !preview.ok && forumUrl.trim() !== "" ? preview.error : null
+  // setCustomCode is a protected method: Framer's own flow is to gate the
+  // control on the permission rather than call it optimistically.
+  const canInstall = useIsAllowedTo("setCustomCode")
 
   const handleAddToSite = async () => {
     const built = buildEmbedCode({ forumUrl, page, fullWidth })
@@ -129,7 +132,12 @@ export function App() {
         <button
           className="framer-button-primary"
           onClick={handleAddToSite}
-          disabled={!preview.ok}
+          disabled={!preview.ok || !canInstall}
+          title={
+            canInstall
+              ? undefined
+              : "Automatic install isn't available for this account — use Copy code."
+          }
         >
           Add to site
         </button>
@@ -137,6 +145,14 @@ export function App() {
           Copy code
         </button>
       </div>
+
+      {preview.ok && !canInstall && (
+        <p className="wtbx-note">
+          Automatic install isn't available for this account (Custom Code needs
+          a paid Framer plan or edit permission) — use <b>Copy code</b> and
+          paste it into an Embed element.
+        </p>
+      )}
 
       {status.kind !== "idle" && (
         <p

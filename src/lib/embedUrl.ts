@@ -65,7 +65,14 @@ function resolvePageParam(
 
   if (raw.includes(ALT_EMBED_PARAM)) {
     // Query form: "...?p=/topic/123" (WT splits on altEmbedParam and takes [1]).
-    pageParam = decodeURIComponent(raw.split(ALT_EMBED_PARAM)[1])
+    // WT assumes a well-formed escape; a truncated paste ("...?p=%") makes
+    // decodeURIComponent throw, which would blank the panel from useMemo.
+    const encoded = raw.split(ALT_EMBED_PARAM)[1]
+    try {
+      pageParam = decodeURIComponent(encoded)
+    } catch {
+      return { error: `"${raw}" has an invalid escape sequence.` }
+    }
   } else if (/^https?:\/\//i.test(raw)) {
     // Full URL: must live on the forum's domain (WT master alert rule).
     if (!raw.startsWith(forumUrl + "/") && raw !== forumUrl) {
