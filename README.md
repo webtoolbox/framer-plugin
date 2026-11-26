@@ -48,9 +48,10 @@ from there:
 3. The panel appears in the editor; publish the site to see the installed embed
    on the published pages.
 
-**Add to site** installs Custom Code, which Framer gates behind a paid plan. On
-the free plan the plugin copies the snippet to the clipboard instead, for
-placement in an Embed element.
+**Add to site** installs the snippet as Custom Code (body end). Custom Code is a
+paid-plan feature in Framer, so if the call is refused — the account lacks the
+permission, or its plan does not cover Custom Code — the plugin copies the
+snippet to the clipboard instead, for placement in an Embed element.
 
 ## Known limitations
 
