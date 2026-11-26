@@ -29,10 +29,26 @@ npm run lint       # eslint, zero warnings allowed
 npm run typecheck  # tsc --noEmit
 ```
 
-> Note: `npm run dev` serves over HTTPS (`vite-plugin-framer` provides the
-> local certificate the Framer editor bridge requires) — no extra cert setup.
-> Ad-blockers (Brave etc.) may block localhost — allow-list framer.com if the
-> plugin doesn't open.
+> Note: `npm run dev` serves the plugin on `http://localhost:5173` — plain HTTP,
+> because `localhost` is a secure origin, so the Framer editor can embed it
+> without a certificate (that is why the template's `vite-plugin-mkcert` was
+> dropped). Ad-blockers (Brave etc.) may block localhost — allow-list framer.com
+> if the plugin doesn't open.
+
+## Testing inside Framer
+
+The panel only runs inside the Framer editor, so the local dev server is opened
+from there:
+
+1. `npm run dev` — serves `http://localhost:5173`.
+2. In Framer, open a project → **Plugins → Open Development Plugin**
+   (<https://framer.com/plugins/open>) → point it at `http://localhost:5173`.
+3. The panel appears in the editor; publish the site to see the installed embed
+   on the published pages.
+
+**Add to site** installs Custom Code, which Framer gates behind a paid plan. On
+the free plan the plugin copies the snippet to the clipboard instead, for
+placement in an Embed element.
 
 ## Release
 
