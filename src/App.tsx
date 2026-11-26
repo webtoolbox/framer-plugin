@@ -48,7 +48,10 @@ export function App() {
     if (result.status === "installed") {
       setStatus({
         kind: "ok",
-        message: "Forum embed added to your site's custom code (body end).",
+        message:
+          "Forum embed added to your site's custom code (body end). " +
+          "Publish your site to see the forum — custom code runs on the " +
+          "published pages.",
       })
     } else if (result.status === "copied") {
       setStatus({
@@ -90,27 +93,29 @@ export function App() {
 
   return (
     <main className="wtbx-plugin">
-      <h1>Website Toolbox Forum</h1>
+      <div className="wtbx-field">
+        <label htmlFor="wtx-forum-url">Forum URL</label>
+        <input
+          id="wtx-forum-url"
+          type="url"
+          placeholder="https://acme.websitetoolbox.com"
+          value={forumUrl}
+          onChange={(e) => setForumUrl(e.target.value)}
+        />
+      </div>
 
-      <label htmlFor="wtx-forum-url">Forum URL</label>
-      <input
-        id="wtx-forum-url"
-        type="url"
-        placeholder="https://acme.websitetoolbox.com"
-        value={forumUrl}
-        onChange={(e) => setForumUrl(e.target.value)}
-      />
-
-      <label htmlFor="wtx-page">
-        Page <span className="wtbx-hint">(optional — forum page to open)</span>
-      </label>
-      <input
-        id="wtx-page"
-        type="text"
-        placeholder="topic/123"
-        value={page}
-        onChange={(e) => setPage(e.target.value)}
-      />
+      <div className="wtbx-field">
+        <label htmlFor="wtx-page">
+          Page <span className="wtbx-hint">(optional)</span>
+        </label>
+        <input
+          id="wtx-page"
+          type="text"
+          placeholder="topic/123"
+          value={page}
+          onChange={(e) => setPage(e.target.value)}
+        />
+      </div>
 
       <label className="wtbx-checkbox">
         <input
@@ -124,9 +129,12 @@ export function App() {
       {liveError && <p className="wtbx-status-error">{liveError}</p>}
 
       {preview.ok && (
-        <code className="wtbx-preview" title={preview.embedUrl}>
-          {preview.embedUrl}
-        </code>
+        <div className="wtbx-field">
+          <span className="wtbx-preview-label">Embed URL</span>
+          <code className="wtbx-preview" title={preview.embedUrl}>
+            {preview.embedUrl}
+          </code>
+        </div>
       )}
 
       <div className="wtbx-actions">
