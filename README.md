@@ -34,8 +34,11 @@ npm run typecheck  # tsc --noEmit
 > Note: `npm run dev` serves the plugin on `http://localhost:5173` — plain HTTP,
 > because `localhost` is a secure origin, so the Framer editor can embed it
 > without a certificate (that is why the template's `vite-plugin-mkcert` was
-> dropped). Ad-blockers (Brave etc.) may block localhost — allow-list framer.com
-> if the plugin doesn't open.
+> dropped). Two things can still block the editor from reaching it: an ad-blocker
+> (Brave etc.) may block localhost — allow-list framer.com — and Chrome may raise
+> a **Local Network Access** prompt for a public site reaching localhost, which
+> must be allowed; without it the editor's fetch fails silently and no plugin
+> appears.
 
 ## Testing inside Framer
 
@@ -43,8 +46,11 @@ The panel only runs inside the Framer editor, so the local dev server is opened
 from there:
 
 1. `npm run dev` — serves `http://localhost:5173`.
-2. In Framer, open a project → **Plugins → Open Development Plugin**
-   (<https://framer.com/plugins/open>) → point it at `http://localhost:5173`.
+2. In Framer, open a project → **Plugins → Show developer tools**, then
+   **Plugins → Open Development Plugin** (<https://framer.com/plugins/open>).
+   The dialog **pre-fills `https://localhost:5173`** — change it to
+   `http://localhost:5173`, because this dev server is plain HTTP. Left
+   pre-filled, it fails silently and no panel appears.
 3. The panel appears in the editor; publish the site to see the installed embed
    on the published pages.
 
