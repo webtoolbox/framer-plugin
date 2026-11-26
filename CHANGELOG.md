@@ -8,6 +8,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/); versioning: [SemVer](ht
 ### Added
 - Initial plugin: forum URL / page / full-width inputs with live embed-URL preview.
 - **Add to site** — injects the WT embed snippet via Framer `setCustomCode` (bodyEnd).
+  Custom Code is gated behind a paid Framer plan, so a refused install falls back
+  to copying the snippet to the clipboard and pointing at manual placement.
 - **Copy code** — clipboard fallback with the WT admin-shaped snippet.
 - `buildEmbedUrl`/`buildEmbedCode` pure builders byte-matched to Website-Toolbox
   `data/js/wt_global/embed.js` (`updateEmbedCode`) on origin/master, pinned by vitest suite.

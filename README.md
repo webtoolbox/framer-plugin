@@ -7,7 +7,9 @@ Adds your embedded forum to a Framer site in two clicks — no manual code pasti
 
 - **Add to site** — generates the exact WT admin embed snippet and injects it
   into the published site's custom code (`bodyEnd`), using Framer's official
-  `setCustomCode` plugin API.
+  `setCustomCode` plugin API. Custom Code is gated behind a paid Framer plan, so
+  when the install is refused the snippet is copied to the clipboard instead and
+  the panel says to paste it into an Embed element.
 - **Copy code** — copies the same snippet to the clipboard for manual placement
   (e.g. inside an Embed component on a specific page).
 - Inputs: **Forum URL** (required), **Page** (optional — a forum page to open),
@@ -27,9 +29,10 @@ npm run lint       # eslint, zero warnings allowed
 npm run typecheck  # tsc --noEmit
 ```
 
-> Note: `npm run dev` uses `vite-plugin-mkcert` (local HTTPS cert for the
-> Framer editor bridge). Ad-blockers (Brave etc.) may block localhost —
-> allow-list framer.com if the plugin doesn't open.
+> Note: `npm run dev` serves over HTTPS (`vite-plugin-framer` provides the
+> local certificate the Framer editor bridge requires) — no extra cert setup.
+> Ad-blockers (Brave etc.) may block localhost — allow-list framer.com if the
+> plugin doesn't open.
 
 ## Release
 
@@ -46,5 +49,6 @@ Upload `plugin.zip` at the [Marketplace dashboard](https://framer.com/marketplac
 |---|---|
 | `src/lib/embedUrl.ts` | Pure embed-URL/snippet builder (no DOM) — single source of truth |
 | `src/lib/embedUrl.test.ts` | Byte-match tests vs WT master rules |
+| `src/lib/installEmbed.ts` | Add to site → clipboard fallback decision |
 | `src/App.tsx` | Plugin UI (React) — inputs, preview, Add to site / Copy |
 | `framer.json` | Plugin manifest (name, icon, canvas mode) |

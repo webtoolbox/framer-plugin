@@ -1,6 +1,7 @@
 import { framer } from "@framer/plugin"
 import { useMemo, useState } from "react"
 import { buildEmbedCode, buildEmbedUrl } from "./lib/embedUrl.ts"
+import { installEmbed } from "./lib/installEmbed.ts"
 import "./App.css"
 
 framer.showUI({
@@ -31,19 +32,35 @@ export function App() {
       setStatus({ kind: "error", message: built.error })
       return
     }
-    try {
-      // WT admin's embed snippet is a site-level <script>; Framer's official
-      // slot for site-wide HTML is custom code — inject at bodyEnd so the
-      // embed script runs after the page content exists.
-      await framer.setCustomCode({ html: built.code, location: "bodyEnd" })
+    // WT admin's embed snippet is a site-level <script>; Framer's official
+    // slot for site-wide HTML is custom code — inject at bodyEnd so the embed
+    // script runs after the page content exists. Framer gates Custom Code
+    // behind a paid plan (and a limited collaborator can be refused outright),
+    // so a refusal falls back to the clipboard instead of dead-ending.
+    const result = await installEmbed(
+      built.code,
+      (code) => framer.setCustomCode({ html: code, location: "bodyEnd" }),
+      (code) => navigator.clipboard.writeText(code),
+    )
+    if (result.status === "installed") {
       setStatus({
         kind: "ok",
         message: "Forum embed added to your site's custom code (body end).",
       })
-    } catch (e) {
+    } else if (result.status === "copied") {
       setStatus({
         kind: "error",
-        message: `Could not add custom code: ${e instanceof Error ? e.message : String(e)}`,
+        message:
+          `Couldn't add it to the site automatically (${result.reason}). ` +
+          "The embed code is on your clipboard — paste it into an Embed " +
+          "element on the page instead.",
+      })
+    } else {
+      setStatus({
+        kind: "error",
+        message:
+          `Couldn't add it to the site automatically (${result.reason}). ` +
+          'Use "Copy code" and paste it into an Embed element on the page.',
       })
     }
   }
@@ -54,8 +71,17 @@ export function App() {
       setStatus({ kind: "error", message: built.error })
       return
     }
-    await navigator.clipboard.writeText(built.code)
-    setStatus({ kind: "ok", message: "Embed code copied to clipboard." })
+    try {
+      await navigator.clipboard.writeText(built.code)
+      setStatus({ kind: "ok", message: "Embed code copied to clipboard." })
+    } catch (e) {
+      setStatus({
+        kind: "error",
+        message: `Couldn't copy to the clipboard: ${
+          e instanceof Error ? e.message : String(e)
+        }.`,
+      })
+    }
   }
 
   return (
