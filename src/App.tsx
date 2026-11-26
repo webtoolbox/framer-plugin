@@ -62,8 +62,9 @@ export function App() {
       setStatus({
         kind: "error",
         message:
-          `Couldn't add it to the site automatically (${result.reason}). ` +
-          'Use "Copy code" and paste it into an Embed element on the page.',
+          `Couldn't add it to the site automatically (${result.reason}), and ` +
+          "the clipboard is unavailable too. Copy the embed code from your " +
+          "forum's admin Embed page and paste it into an Embed element.",
       })
     }
   }

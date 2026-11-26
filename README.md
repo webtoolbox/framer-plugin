@@ -5,7 +5,7 @@ Adds your embedded forum to a Framer site in two clicks — no manual code pasti
 
 ## What it does
 
-- **Add to site** — generates the exact WT admin embed snippet and injects it
+- **Add to site** — generates a WT-admin-shaped embed snippet and injects it
   into the published site's custom code (`bodyEnd`), using Framer's official
   `setCustomCode` plugin API. Custom Code is gated behind a paid Framer plan, so
   when the install is refused the snippet is copied to the clipboard instead and
