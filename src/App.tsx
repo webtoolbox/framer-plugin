@@ -130,8 +130,14 @@ export function App() {
 
       {preview.ok && (
         <div className="wtbx-field">
-          <span className="wtbx-preview-label">Embed URL</span>
-          <code className="wtbx-preview" title={preview.embedUrl}>
+          <span className="wtbx-preview-label" id="wtx-embed-url-label">
+            Embed URL
+          </span>
+          <code
+            className="wtbx-preview"
+            aria-labelledby="wtx-embed-url-label"
+            title={preview.embedUrl}
+          >
             {preview.embedUrl}
           </code>
         </div>

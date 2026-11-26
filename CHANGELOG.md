@@ -5,6 +5,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/); versioning: [SemVer](ht
 
 ## [0.1.0] — Unreleased
 
+### Changed
+- Panel UI pass: grouped field spacing (a label now sits with its own control),
+  the embed-URL preview moved into its own labelled surface instead of floating
+  as bare text, and the installed-state message now says to publish the site to
+  see the forum — Framer runs custom code on published pages only.
+
 ### Fixed
 - A malformed `%`-escape in the **Page** field (e.g. `page?p=%`) no longer
   throws — it reports an invalid-escape error instead of blanking the panel.

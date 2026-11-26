@@ -11,6 +11,9 @@ main.wtbx-plugin {
      content is ~360px tall). */
   max-height: 100vh;
   overflow-y: auto;
+  /* Keep the inner width steady when the scrollbar appears (classic scrollbars
+     would otherwise shave ~15px and reflow the inputs/buttons). */
+  scrollbar-gutter: stable;
 }
 
 .wtbx-field {
