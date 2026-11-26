@@ -143,4 +143,16 @@ describe("buildEmbedCode — WT admin snippet shape", () => {
     const r = buildEmbedCode({ forumUrl: "" })
     expect(r.ok).toBe(false)
   })
+
+  it("pins the snippet bytes (WT admin shape, so a refactor cannot drift it)", () => {
+    const r = buildEmbedCode({ forumUrl: FORUM, page: "topic/9", fullWidth: false })
+    expect(r.ok && r.code).toBe(
+      "<!--Begin Website Toolbox Forum Embed Code-->\n" +
+        '<div id="wtEmbedCode">' +
+        `<script type="text/javascript" id="embedded_forum" src="${FORUM}/js/mb/embed.js#/topic/9?fullwidth=0" ></script>` +
+        `<noscript><a href="${FORUM}/">Forum</a></noscript>` +
+        "</div>\n" +
+        "<!--End Website Toolbox Forum Embed Code-->",
+    )
+  })
 })

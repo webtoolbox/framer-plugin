@@ -15,9 +15,11 @@ Adds your embedded forum to a Framer site in two clicks — no manual code pasti
 - Inputs: **Forum URL** (required), **Page** (optional — a forum page to open),
   **Full width** (toggle → `?fullwidth=0`).
 
-The generated URL/snippet is a **byte-match of the WT admin "Embed" page logic**
+The generated URL is a **byte-match of the WT admin "Embed" page logic**
 (`data/js/wt_global/embed.js` → `updateEmbedCode()` on the Website-Toolbox repo's
-`origin/master`), pinned by unit tests in `src/lib/embedUrl.test.ts`.
+`origin/master`), and the snippet reproduces the admin snippet's shape
+(`cgi-bin/members/mb/embed`). Both are pinned by the unit tests in
+`src/lib/embedUrl.test.ts`.
 
 ## Development
 
