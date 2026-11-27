@@ -22,6 +22,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/); versioning: [SemVer](ht
   the dev server moved to `vite-plugin-framer`.
 
 ### Added
+- **Sign in to Website Toolbox** — the plugin now signs the operator in to the
+  forum's Website Toolbox account over OAuth: it opens the forum's sign-in page
+  in the browser (Framer's sanctioned `window.open` flow — a plugin iframe has
+  no `window.opener`), polls with a single-use read key for the tokens, and
+  shows who is signed in. A cancelled, expired (10 minutes) or timed-out
+  sign-in is reported with a retry.
 - Initial plugin: forum URL / page / full-width inputs with live embed-URL preview.
 - **Add to site** — injects the WT embed snippet via Framer `setCustomCode` (bodyEnd).
   Custom Code is gated behind a paid Framer plan, so a refused install falls back

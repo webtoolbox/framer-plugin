@@ -1,7 +1,13 @@
 import { framer, useIsAllowedTo } from "@framer/plugin"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { buildEmbedCode, buildEmbedUrl } from "./lib/embedUrl.ts"
 import { installEmbed } from "./lib/installEmbed.ts"
+import {
+  fetchUserinfo,
+  resolveServerBase,
+  signInToWebsiteToolbox,
+  type Tokens,
+} from "./lib/oauthSignIn.ts"
 import "./App.css"
 
 framer.showUI({
@@ -10,6 +16,51 @@ framer.showUI({
   height: 360,
 })
 
+/** Where the signed-in session is remembered between panel opens. */
+const SESSION_KEY = "wtbx.oauth.session"
+
+interface StoredSession {
+  tokens: Tokens
+  serverBase: string
+  name?: string
+  email?: string
+}
+
+function loadSession(): StoredSession | null {
+  try {
+    const raw = window.localStorage.getItem(SESSION_KEY)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as StoredSession
+    if (
+      parsed &&
+      typeof parsed === "object" &&
+      parsed.tokens &&
+      typeof parsed.tokens.accessToken === "string"
+    ) {
+      return parsed
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+function saveSession(session: StoredSession | null): void {
+  try {
+    if (session) window.localStorage.setItem(SESSION_KEY, JSON.stringify(session))
+    else window.localStorage.removeItem(SESSION_KEY)
+  } catch {
+    /* storage unavailable — the session simply does not persist */
+  }
+}
+
+type AuthState = {
+  status: "signedOut" | "pending" | "signedIn" | "error"
+  name?: string
+  email?: string
+  message?: string
+}
+
 export function App() {
   const [forumUrl, setForumUrl] = useState("")
   const [page, setPage] = useState("")
@@ -17,17 +68,91 @@ export function App() {
   const [status, setStatus] = useState<
     { kind: "idle" | "ok" | "error"; message: string }>({ kind: "idle", message: "" }
   )
+  const [auth, setAuth] = useState<AuthState>({ status: "signedOut" })
 
   const preview = useMemo(
     () => buildEmbedUrl({ forumUrl, page, fullWidth }),
     [forumUrl, page, fullWidth],
   )
+  // The authorization server's issuer is the forum itself, so the server base
+  // is the forum address's origin.
+  const serverBase = useMemo(() => resolveServerBase(forumUrl), [forumUrl])
   // Live validation: show WHY the preview/buttons are unavailable while typing
   // (otherwise invalid input just silently hides the preview — no feedback).
   const liveError = !preview.ok && forumUrl.trim() !== "" ? preview.error : null
   // setCustomCode is a protected method: Framer's own flow is to gate the
   // control on the permission rather than call it optimistically.
   const canInstall = useIsAllowedTo("setCustomCode")
+
+  // Restore a previous sign-in and refresh the displayed identity once.
+  useEffect(() => {
+    const session = loadSession()
+    if (!session) return
+    setAuth({ status: "signedIn", name: session.name, email: session.email })
+    let cancelled = false
+    void fetchUserinfo({
+      serverBase: session.serverBase,
+      accessToken: session.tokens.accessToken,
+    }).then((identity) => {
+      if (cancelled || !identity) return
+      setAuth({ status: "signedIn", name: identity.name, email: identity.email })
+      saveSession({ ...session, name: identity.name, email: identity.email })
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  const handleSignIn = async () => {
+    if (!serverBase) {
+      setAuth({ status: "error", message: "Enter your forum URL first." })
+      return
+    }
+    setAuth({ status: "pending" })
+    const outcome = await signInToWebsiteToolbox({
+      serverBase,
+      // Framer's sanctioned way for a plugin to open an external URL: the
+      // sign-in page opens in the user's real browser (window.open), because a
+      // plugin iframe has no window.opener to receive tokens by postMessage.
+      openUrl: (url) => {
+        window.open(url, "_blank")
+      },
+    })
+    if (outcome.status === "signedIn") {
+      setAuth({ status: "signedIn", name: outcome.identity?.name, email: outcome.identity?.email })
+      saveSession({
+        tokens: outcome.tokens,
+        serverBase,
+        name: outcome.identity?.name,
+        email: outcome.identity?.email,
+      })
+      return
+    }
+    if (outcome.status === "denied") {
+      setAuth({ status: "error", message: "Sign-in was cancelled (access denied)." })
+      return
+    }
+    if (outcome.status === "expired") {
+      setAuth({
+        status: "error",
+        message: "The sign-in request expired (10 minutes). Please try again.",
+      })
+      return
+    }
+    if (outcome.status === "timeout") {
+      setAuth({
+        status: "error",
+        message: "Timed out waiting for the sign-in to finish. Please try again.",
+      })
+      return
+    }
+    setAuth({ status: "error", message: outcome.message })
+  }
+
+  const handleSignOut = () => {
+    saveSession(null)
+    setAuth({ status: "signedOut" })
+  }
 
   const handleAddToSite = async () => {
     const built = buildEmbedCode({ forumUrl, page, fullWidth })
@@ -178,6 +303,39 @@ export function App() {
           {status.message}
         </p>
       )}
+
+      <div className="wtbx-field">
+        <span className="wtbx-preview-label">Website Toolbox account</span>
+        {auth.status === "pending" && (
+          <p className="wtbx-note" role="status">
+            Waiting for you to sign in — a browser tab has opened. Approve the
+            request there, then come back to this panel.
+          </p>
+        )}
+        {auth.status === "signedIn" && (
+          <div className="wtbx-field">
+            <p className="wtbx-status-ok">
+              {auth.name ? `Signed in as ${auth.name}` : "Signed in to Website Toolbox"}
+              {auth.email ? ` (${auth.email})` : ""}.
+            </p>
+            <button onClick={handleSignOut}>Sign out</button>
+          </div>
+        )}
+        {auth.status === "error" && (
+          <p className="wtbx-status-error">{auth.message}</p>
+        )}
+        {(auth.status === "signedOut" || auth.status === "error") && (
+          <button
+            onClick={handleSignIn}
+            disabled={!serverBase}
+            title={serverBase ? undefined : "Enter your forum URL first."}
+          >
+            {auth.status === "error"
+              ? "Try signing in again"
+              : "Sign in to Website Toolbox"}
+          </button>
+        )}
+      </div>
     </main>
   )
 }
