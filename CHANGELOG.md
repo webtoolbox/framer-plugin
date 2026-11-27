@@ -22,6 +22,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/); versioning: [SemVer](ht
   the dev server moved to `vite-plugin-framer`.
 
 ### Added
+- **Signed-in embed** — after you sign in, the embed URL carries the forum's
+  SSO sign-in token as `?authtoken=<token>` (the same parameter our
+  Thinkific/Kajabi/Shopify embeds append), so the embedded forum renders signed
+  in as you. The token is URL-borne because the embed runs in a third-party
+  iframe (framer.com loading the forum's domain), where the session cookie is
+  not sent. When the sign-in response carries no token — or nobody is signed in
+  — the embed is byte-identical to before and renders a signed-out forum.
 - **Sign in to Website Toolbox** — the plugin now signs the operator in to the
   forum's Website Toolbox account over OAuth: it opens the forum's sign-in page
   in the browser (Framer's sanctioned `window.open` flow — a plugin iframe has

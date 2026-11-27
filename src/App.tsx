@@ -58,6 +58,8 @@ type AuthState = {
   status: "signedOut" | "pending" | "signedIn" | "error"
   name?: string
   email?: string
+  /** The forum SSO token minted for this sign-in; fed into the embed URL. */
+  authToken?: string
   message?: string
 }
 
@@ -70,9 +72,15 @@ export function App() {
   )
   const [auth, setAuth] = useState<AuthState>({ status: "signedOut" })
 
+  // The SSO sign-in token the embed carries so the frame renders signed in.
+  // Only present once a member is signed in AND the sign-in response supplied
+  // one; otherwise the embed stays anonymous.
+  const authToken =
+    auth.status === "signedIn" && auth.authToken ? auth.authToken : undefined
+
   const preview = useMemo(
-    () => buildEmbedUrl({ forumUrl, page, fullWidth }),
-    [forumUrl, page, fullWidth],
+    () => buildEmbedUrl({ forumUrl, page, fullWidth, authToken }),
+    [forumUrl, page, fullWidth, authToken],
   )
   // The authorization server's issuer is the forum itself, so the server base
   // is the forum address's origin.
@@ -88,7 +96,12 @@ export function App() {
   useEffect(() => {
     const session = loadSession()
     if (!session) return
-    setAuth({ status: "signedIn", name: session.name, email: session.email })
+    setAuth({
+      status: "signedIn",
+      name: session.name,
+      email: session.email,
+      authToken: session.tokens.authToken ?? undefined,
+    })
     let cancelled = false
     void fetchUserinfo({
       serverBase: session.serverBase,
@@ -119,7 +132,12 @@ export function App() {
       },
     })
     if (outcome.status === "signedIn") {
-      setAuth({ status: "signedIn", name: outcome.identity?.name, email: outcome.identity?.email })
+      setAuth({
+        status: "signedIn",
+        name: outcome.identity?.name,
+        email: outcome.identity?.email,
+        authToken: outcome.tokens.authToken ?? undefined,
+      })
       saveSession({
         tokens: outcome.tokens,
         serverBase,
@@ -155,7 +173,7 @@ export function App() {
   }
 
   const handleAddToSite = async () => {
-    const built = buildEmbedCode({ forumUrl, page, fullWidth })
+    const built = buildEmbedCode({ forumUrl, page, fullWidth, authToken })
     if (!built.ok) {
       setStatus({ kind: "error", message: built.error })
       return
@@ -198,7 +216,7 @@ export function App() {
   }
 
   const handleCopy = async () => {
-    const built = buildEmbedCode({ forumUrl, page, fullWidth })
+    const built = buildEmbedCode({ forumUrl, page, fullWidth, authToken })
     if (!built.ok) {
       setStatus({ kind: "error", message: built.error })
       return
@@ -318,6 +336,18 @@ export function App() {
               {auth.name ? `Signed in as ${auth.name}` : "Signed in to Website Toolbox"}
               {auth.email ? ` (${auth.email})` : ""}.
             </p>
+            {authToken ? (
+              <p className="wtbx-note">
+                The embed below opens the forum signed in as you — the sign-in
+                token is carried in the embed URL, so it works inside a
+                third-party iframe where a session cookie would not be sent.
+              </p>
+            ) : (
+              <p className="wtbx-note">
+                Signed in, but the forum did not return an embed sign-in token,
+                so the embed will render signed out.
+              </p>
+            )}
             <button onClick={handleSignOut}>Sign out</button>
           </div>
         )}

@@ -112,6 +112,39 @@ describe("buildEmbedUrl — WT master updateEmbedCode() byte-match rules", () =>
     }
   })
 
+  it("SSO rule: an authToken is passed as ?authtoken= (signed-in embed)", () => {
+    const r = buildEmbedUrl({ forumUrl: FORUM, authToken: "abc123" })
+    expect(r.ok && r.embedUrl).toBe(`${FORUM}/js/mb/embed.js?authtoken=abc123`)
+  })
+
+  it("SSO rule: authToken orders before fullwidth=0", () => {
+    const r = buildEmbedUrl({ forumUrl: FORUM, authToken: "abc123", fullWidth: false })
+    expect(r.ok && r.embedUrl).toBe(
+      `${FORUM}/js/mb/embed.js?authtoken=abc123&fullwidth=0`,
+    )
+  })
+
+  it("SSO rule: authToken rides with a page hash", () => {
+    const r = buildEmbedUrl({ forumUrl: FORUM, page: "topic/9", authToken: "abc123" })
+    expect(r.ok && r.embedUrl).toBe(
+      `${FORUM}/js/mb/embed.js#/topic/9?authtoken=abc123`,
+    )
+  })
+
+  it("SSO rule: the token is percent-encoded", () => {
+    const r = buildEmbedUrl({ forumUrl: FORUM, authToken: "a b&c=d" })
+    expect(r.ok && r.embedUrl).toBe(
+      `${FORUM}/js/mb/embed.js?authtoken=a%20b%26c%3Dd`,
+    )
+  })
+
+  it("SSO rule: no authToken leaves the URL byte-identical to before", () => {
+    const plain = buildEmbedUrl({ forumUrl: FORUM })
+    expect(plain.ok && plain.embedUrl).toBe(`${FORUM}/js/mb/embed.js`)
+    const narrow = buildEmbedUrl({ forumUrl: FORUM, fullWidth: false })
+    expect(narrow.ok && narrow.embedUrl).toBe(`${FORUM}/js/mb/embed.js?fullwidth=0`)
+  })
+
   it("empty forum URL → guidance error", () => {
     const r = buildEmbedUrl({ forumUrl: "   " })
     expect(r.ok).toBe(false)

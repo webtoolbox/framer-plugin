@@ -110,7 +110,12 @@ describe("startPluginAuthorize — POST /oauth/plugin/authorize", () => {
 
 /** Wire tokens (RFC field names) and the parsed result the module must yield. */
 const WIRE_TOKENS = { access_token: "at-123", refresh_token: "rt-456", expires_in: 3600 }
-const TOKENS: Tokens = { accessToken: "at-123", refreshToken: "rt-456", expiresIn: 3600 }
+const TOKENS: Tokens = {
+  accessToken: "at-123",
+  refreshToken: "rt-456",
+  expiresIn: 3600,
+  authToken: null,
+}
 
 describe("pollPluginTokens — GET /oauth/plugin/poll", () => {
   it("keeps polling through 'pending' and returns tokens once 'completed'", async () => {
@@ -135,6 +140,23 @@ describe("pollPluginTokens — GET /oauth/plugin/poll", () => {
     const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ status: "denied" }))
     const r = await pollPluginTokens({ serverBase: BASE, readKey: "k", fetchImpl })
     expect(r).toEqual({ status: "denied" })
+  })
+
+  it("carries the forum's SSO sign-in token when the response includes one", async () => {
+    // The forum mints an `sso_auth_tokens` row for the member and returns it as
+    // `authtoken`; the plugin feeds it into the embed URL so the frame is signed
+    // in. It is NOT the OAuth access token.
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse({ status: "completed", token_type: "Bearer", ...WIRE_TOKENS, authtoken: "sso-token-abc" }),
+    )
+    const r = await pollPluginTokens({ serverBase: BASE, readKey: "k", fetchImpl })
+    expect(r).toEqual({ status: "completed", tokens: { ...TOKENS, authToken: "sso-token-abc" } })
+  })
+
+  it("leaves the SSO token null when the response omits it", async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse({ status: "completed", ...WIRE_TOKENS }))
+    const r = await pollPluginTokens({ serverBase: BASE, readKey: "k", fetchImpl })
+    if (r.status === "completed") expect(r.tokens.authToken).toBeNull()
   })
 
   it("maps a server 'expired' answer", async () => {

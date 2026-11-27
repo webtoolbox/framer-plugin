@@ -17,6 +17,17 @@ export interface EmbedUrlInput {
   page?: string
   /** false → append fullwidth=0 (WT admin "show forum in full width" unchecked). */
   fullWidth?: boolean
+  /**
+   * Optional SSO sign-in token for a signed-in member. When set, it is passed
+   * as `?authtoken=<token>` on the embed script URL; embed.js forwards the
+   * query to its iframe, and the forum's `dologin` signs the member in from it
+   * — the URL-borne equivalent of a session cookie, which a third-party iframe
+   * (framer.com loading the forum) cannot rely on. The token is the forum's SSO
+   * authtoken (an `sso_auth_tokens` row minted by the forum), NOT an OAuth
+   * access token. Absent → the embed renders a signed-out forum, exactly as
+   * before.
+   */
+  authToken?: string
 }
 
 export type EmbedUrlResult =
@@ -133,8 +144,17 @@ export function buildEmbedUrl(input: EmbedUrlInput): EmbedUrlResult {
   let embedUrl = forumUrl + "/js/mb/embed.js"
   if (pageParam) embedUrl += "#" + pageParam
 
-  if (input.fullWidth === false) {
-    embedUrl += embedUrl.indexOf("?") > -1 ? "&fullwidth=0" : "?fullwidth=0"
+  // Trailing params, appended in the same "? then &" style WT master uses for
+  // fullwidth. With no authToken and full width the loop is empty, so the URL is
+  // byte-identical to the admin snippet (pinned by the tests). The SSO token
+  // goes FIRST so a signed-in embed is `…/embed.js?authtoken=<t>` — exactly the
+  // shape our Thinkific/Kajabi/Shopify embeds emit (`embedUrl += "?authtoken="+t`).
+  const trailing: string[] = []
+  if (input.authToken) trailing.push("authtoken=" + encodeURIComponent(input.authToken))
+  if (input.fullWidth === false) trailing.push("fullwidth=0")
+  if (trailing.length) {
+    embedUrl += embedUrl.indexOf("?") > -1 ? "&" : "?"
+    embedUrl += trailing.join("&")
   }
 
   return { ok: true, embedUrl, pageParam }

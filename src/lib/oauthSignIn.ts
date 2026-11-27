@@ -32,6 +32,13 @@ export interface Tokens {
   accessToken: string
   refreshToken: string | null
   expiresIn: number | null
+  /**
+   * The forum's SSO sign-in token for the same member, when the sign-in
+   * response carries one. This is the token the embedded forum signs in from
+   * (`?authtoken=`); it is an `sso_auth_tokens` row minted by the forum, not the
+   * OAuth access token. Null when the server does not provide it.
+   */
+  authToken: string | null
 }
 
 export interface Identity {
@@ -174,6 +181,7 @@ function readTokens(rec: Record<string, unknown>): Tokens | null {
     accessToken,
     refreshToken: typeof rec.refresh_token === "string" ? rec.refresh_token : null,
     expiresIn: typeof rec.expires_in === "number" ? rec.expires_in : null,
+    authToken: typeof rec.authtoken === "string" && rec.authtoken ? rec.authtoken : null,
   }
 }
 
